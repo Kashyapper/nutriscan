@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>NutriScan AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100vh;background:#080810;color:#fff;font-family:'DM Sans',system-ui,sans-serif;overflow-x:hidden}
+button,input{font-family:inherit}
+button{cursor:pointer;border:none;outline:none}
+input{outline:none}
+
+/* Animations */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.04)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,107,53,0.3)}50%{box-shadow:0 0 40px rgba(255,107,53,0.6)}}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes barFill{from{width:0}to{width:var(--w)}}
+
+.spin{animation:spin 1.2s linear infinite;display:inline-block}
+.fadeUp{animation:fadeUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both}
+.fadeIn{animation:fadeIn 0.3s ease both}
+.pulse{animation:pulse 2s ease-in-out infinite}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,107,53,0.3);border-radius:3px}
+
+/* Background glow */
+.bg-glow{position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:700px;height:700px;background:radial-gradient(ellipse,rgba(255,107,53,0.08) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+/* Glass cards */
+.card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent)}
+.card-hero{background:linear-gradient(135deg,rgba(255,107,53,0.15),rgba(255,107,53,0.03),rgba(78,205,196,0.05));border:1px solid rgba(255,107,53,0.25)}
+.card-teal{background:rgba(78,205,196,0.06);border:1px solid rgba(78,205,196,0.2)}
+.card-gold{background:rgba(255,230,109,0.05);border:1px solid rgba(255,230,109,0.15)}
+
+/* Header */
+.header{padding:20px 20px 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;background:rgba(8,8,16,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.logo{font-size:22px;font-weight:900;background:linear-gradient(135deg,#FF6B35,#FFE66D);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px}
+.logo-sub{font-size:9px;opacity:0.25;margin-top:1px;letter-spacing:0.5px}
+.header-icons{display:flex;gap:10px;align-items:center}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:16px;transition:all 0.2s}
+.icon-btn:active{transform:scale(0.92)}
+.icon-btn.active{background:rgba(255,107,53,0.15);border-color:rgba(255,107,53,0.3)}
+
+/* Tabs */
+.tabs{display:flex;margin:14px 0 0;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(8,8,16,0.9);backdrop-filter:blur(20px);position:sticky;top:60px;z-index:199}
+.tab{flex:1;padding:12px 0;background:transparent;color:rgba(255,255,255,0.35);font-weight:500;font-size:13px;border-bottom:2px solid transparent;transition:all 0.25s;letter-spacing:0.2px}
+.tab.active{color:#FF6B35;font-weight:700;border-bottom:2px solid #FF6B35;background:rgba(255,107,53,0.04)}
+
+/* Buttons */
+.btn{border-radius:16px;font-weight:700;font-size:15px;padding:15px;width:100%;transition:all 0.2s;letter-spacing:0.2px}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:linear-gradient(135deg,#FF6B35,#FF8C42);color:#fff;box-shadow:0 8px 32px rgba(255,107,53,0.35);margin-bottom:10px}
+.btn-primary:hover{box-shadow:0 12px 40px rgba(255,107,53,0.5)}
+.btn-secondary{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#fff;margin-bottom:10px}
+.btn-secondary:hover{background:rgba(255,255,255,0.11)}
+.btn-danger{background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.2);color:#ff9999;margin-bottom:10px}
+
+/* Upload area */
+.upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.upload-card{border-radius:20px;padding:24px 12px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all 0.2s;border:none}
+.upload-card:active{transform:scale(0.96)}
+.upload-card-primary{background:linear-gradient(135deg,#FF6B35,#FF8C42);box-shadow:0 8px 32px rgba(255,107,53,0.3)}
+.upload-card-secondary{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1)}
+.upload-icon{font-size:40px;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.3))}
+.upload-label{font-size:16px;font-weight:700;color:#fff}
+.upload-sub{font-size:11px;color:rgba(255,255,255,0.6);font-weight:400}
+
+.dropzone{border:2px dashed rgba(255,107,53,0.2);border-radius:16px;padding:18px;text-align:center;font-size:12px;color:rgba(255,255,255,0.35);cursor:pointer;transition:all 0.25s;margin-bottom:14px}
+.dropzone:hover,.dropzone.drag{border-color:#FF6B35;color:rgba(255,255,255,0.7);background:rgba(255,107,53,0.05)}
+
+/* Camera modal */
+#cam-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.97);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+#cam-modal.open{display:flex}
+.cam-header{position:absolute;top:0;left:0;right:0;padding:20px;display:flex;justify-content:space-between;align-items:center}
+.cam-title{font-size:16px;font-weight:700;color:rgba(255,255,255,0.8)}
+#cam-video{width:100%;max-width:480px;max-height:65vh;object-fit:cover;border-radius:20px;background:#111;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+#cam-canvas{display:none}
+.cam-controls{display:flex;gap:20px;margin-top:28px;align-items:center;justify-content:center}
+.cam-snap{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#FF6B35,#FF8C42);font-size:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(255,107,53,0.5);animation:glow 2s ease-in-out infinite;transition:transform 0.15s}
+.cam-snap:active{transform:scale(0.93)}
+.cam-side-btn{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.12);backdrop-filter:blur(10px);font-size:22px;display:flex;align-items:center;justify-content:center;color:#fff;transition:all 0.2s;border:1px solid rgba(255,255,255,0.15)}
+.cam-side-btn:active{background:rgba(255,255,255,0.2)}
+.cam-hint{color:rgba(255,255,255,0.3);font-size:12px;margin-top:16px;text-align:center}
+
+/* Macro rings */
+.macro-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.macro-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.macro-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;overflow:hidden;transition:all 0.2s}
+.macro-top{position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.ring-wrap{position:relative}
+.ring-pct{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:800;text-align:center;line-height:1}
+.macro-val{font-size:16px;font-weight:900}
+.macro-lbl{font-size:8px;opacity:0.4;text-transform:uppercase;letter-spacing:1.5px}
+.macro-goal{font-size:7px;opacity:0.22}
+
+/* Nutrition bars */
+.n-bar{margin-bottom:12px}
+.n-bar-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;align-items:center}
+.n-bar-track{height:5px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden}
+.n-bar-fill{height:100%;border-radius:5px;transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1)}
+
+/* Food result */
+.food-img{width:100%;height:190px;object-fit:cover;border-radius:14px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.food-name{font-weight:900;font-size:26px;letter-spacing:-0.5px;margin-bottom:6px}
+.food-desc{opacity:0.45;font-size:13px;line-height:1.6}
+.food-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.tag{font-size:10px;padding:4px 12px;border-radius:20px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.06);font-weight:500}
+
+/* Score grid */
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.score-card{text-align:center;padding:18px 12px}
+.score-lbl{font-size:10px;opacity:0.35;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.score-val{font-size:44px;font-weight:900;line-height:1}
+.score-sub{font-size:10px;opacity:0.3;margin-top:4px}
+
+/* Log items */
+.log-item{display:flex;gap:14px;align-items:center;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:18px;margin-bottom:10px;transition:all 0.2s;position:relative}
+.log-thumb{width:54px;height:54px;object-fit:cover;border-radius:12px;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.log-thumb-placeholder{width:54px;height:54px;border-radius:12px;flex-shrink:0;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:24px}
+.log-name{font-weight:700;font-size:14px;margin-bottom:2px}
+.log-cal{font-size:20px;font-weight:900;color:#FF6B35;line-height:1;margin-bottom:3px}
+.log-macros{font-size:10px;opacity:0.4;font-weight:500}
+.log-time{font-size:10px;opacity:0.3}
+.health-badge{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.remove-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,60,60,0.1);color:rgba(255,100,100,0.6);font-size:13px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;border:none}
+.remove-btn:hover{background:rgba(255,60,60,0.25);color:#ff9999}
+
+/* Today snapshot */
+.today-snap{display:flex;justify-content:space-around;text-align:center;padding:4px 0}
+.snap-item{display:flex;flex-direction:column;align-items:center;gap:4px}
+.snap-icon{font-size:22px}
+.snap-val{font-weight:800;font-size:15px;line-height:1}
+.snap-lbl{font-size:9px;opacity:0.35;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Error */
+.error-box{background:rgba(255,50,50,0.08);border:1px solid rgba(255,50,50,0.25);border-radius:14px;padding:16px;margin-top:14px}
+.error-icon{font-size:20px;margin-bottom:6px}
+.error-title{font-weight:700;font-size:14px;color:#ff9999;margin-bottom:4px}
+.error-debug{font-size:10px;opacity:0.5;font-family:monospace;word-break:break-all;background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;white-space:pre-wrap;max-height:120px;overflow-y:auto}
+
+/* Scan screen */
+.scan-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:40px 20px}
+.scan-orb{font-size:80px;margin-bottom:24px;filter:drop-shadow(0 0 30px rgba(255,107,53,0.5))}
+.scan-title{font-size:24px;font-weight:800;margin-bottom:10px;letter-spacing:-0.3px}
+.scan-sub{font-size:14px;opacity:0.35;line-height:1.6}
+.scan-dots{display:flex;gap:8px;margin-top:24px;justify-content:center}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,107,53,0.4);animation:pulse 1.4s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:0.2s}
+.dot:nth-child(3){animation-delay:0.4s}
+
+/* Cal progress */
+.cal-track{height:8px;background:rgba(255,255,255,0.07);border-radius:8px;overflow:hidden;margin:8px 0}
+.cal-fill{height:100%;border-radius:8px;transition:width 0.8s ease}
+
+/* Section label */
+.sec-lbl{font-size:11px;opacity:0.35;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;font-weight:600}
+
+/* Divider */
+.divider{height:1px;background:rgba(255,255,255,0.06);margin:4px 0 16px}
+
+/* Empty state */
+.empty{text-align:center;padding:60px 20px;opacity:0.25}
+.empty-icon{font-size:52px;margin-bottom:14px}
+.empty-text{font-size:15px;line-height:1.6}
+
+/* Greeting banner */
+.banner{background:linear-gradient(135deg,rgba(255,107,53,0.12),rgba(255,230,109,0.06));border:1px solid rgba(255,107,53,0.15);border-radius:18px;padding:18px 20px;margin-bottom:16px;display:flex;align-items:center;gap:14px}
+.banner-icon{font-size:32px;flex-shrink:0}
+.banner-title{font-weight:700;font-size:15px;margin-bottom:3px}
+.banner-sub{font-size:12px;opacity:0.5;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<!-- Hidden file input -->
+<input id="gi" type="file" accept="image/*" style="position:absolute;top:-9999px;left:-9999px">
+
+<!-- Camera modal -->
+<div id="cam-modal">
+  <div class="cam-header">
+    <div class="cam-title">📸 Camera</div>
+    <button class="cam-side-btn" onclick="closeCamera()" style="width:40px;height:40px;font-size:18px">✕</button>
+  </div>
+  <video id="cam-video" autoplay playsinline muted></video>
+  <canvas id="cam-canvas" style="display:none"></canvas>
+  <div class="cam-controls">
+    <button class="cam-side-btn" onclick="flipCamera()" title="Flip camera">🔄</button>
+    <button class="cam-snap" onclick="snapPhoto()">📸</button>
+    <button class="cam-side-btn" onclick="openGallery()" title="Choose from gallery">🖼️</button>
+  </div>
+  <div class="cam-hint">Tap 📸 to capture · 🔄 to flip · 🖼️ for gallery</div>
+</div>
+
+<!-- App container -->
+<div id="app" style="max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;z-index:1"></div>
+
+<script>
+const GOALS={calories:2000,protein:150,carbs:250,fat:65,fiber:25,sugar:50,sodium:2300,saturatedFat:20,cholesterol:300};
+const C={protein:"#4ECDC4",carbs:"#FFE66D",fat:"#A8DADC",fiber:"#95E1D3",sugar:"#FFB347",saturatedFat:"#FF8C94",sodium:"#B4A7D6",cholesterol:"#D4A574",calories:"#FF6B35"};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let S={screen:"home",food:null,log:[],error:null,debug:null,tots:{}};
+function set(patch){
+  S={...S,...patch};
+  if(patch.log!==undefined){
+    S.tots=S.log.reduce((a,x)=>{Object.keys(GOALS).forEach(k=>{a[k]=(a[k]||0)+(x[k]||0);});return a;},{});
+  }
+  render();
+}
+
+// ── Camera ────────────────────────────────────────────────────────────────────
+let camStream=null,camFacing="environment";
+
+async function openCamera(){
+  document.getElementById("cam-modal").classList.add("open");
+  await startCam();
+}
+async function startCam(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  try{
+    const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:camFacing,width:{ideal:1920},height:{ideal:1080}},audio:false});
+    camStream=s;
+    document.getElementById("cam-video").srcObject=s;
+  }catch(e){
+    closeCamera();
+    document.getElementById("gi").click();
+  }
+}
+function flipCamera(){camFacing=camFacing==="environment"?"user":"environment";startCam();}
+function closeCamera(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  document.getElementById("cam-modal").classList.remove("open");
+}
+function snapPhoto(){
+  const v=document.getElementById("cam-video"),c=document.getElementById("cam-canvas");
+  c.width=v.videoWidth||1280;c.height=v.videoHeight||720;
+  c.getContext("2d").drawImage(v,0,0);
+  closeCamera();
+  c.toBlob(blob=>{
+    if(!blob){set({error:"Camera capture failed",debug:"Could not get image from camera",screen:"home"});return;}
+    handleFile(new File([blob],"photo.jpg",{type:"image/jpeg"}));
+  },"image/jpeg",0.92);
+}
+function openGallery(){document.getElementById("gi").click();}
+document.getElementById("gi").addEventListener("change",function(){if(this.files[0])handleFile(this.files[0]);this.value="";});
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function toB64(file){return new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(new Error("Read failed"));r.readAsDataURL(file);});}
+function tryJSON(txt){
+  const fns=[t=>JSON.parse(t.trim()),t=>JSON.parse(t.replace(/```json|```/gi,"").trim()),t=>{const s=t.indexOf("{"),e=t.lastIndexOf("}");if(s<0||e<0)throw 0;return JSON.parse(t.slice(s,e+1));}];
+  for(const f of fns){try{const r=f(txt);if(r&&r.name)return r;}catch{}}return null;
+}
+function fixFood(o){
+  const x={...o};
+  ["calories","protein","carbs","fat","fiber","sugar","sodium","saturatedFat","cholesterol","healthScore"].forEach(k=>{x[k]=Math.max(0,parseFloat(x[k])||0);});
+  x.healthScore=Math.min(10,Math.max(1,Math.round(x.healthScore||5)));
+  ["vitamins","minerals","ingredients","tags"].forEach(k=>{x[k]=Array.isArray(x[k])?x[k]:[];});
+  x.name=x.name||"Food";x.emoji=x.emoji||"🍽️";x.description=x.description||"";x.servingSize=x.servingSize||"1 serving";x.summary=x.summary||"";
+  return x;
+}
+function esc(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function hc(s){return s>=8?"#4ecdc4":s>=6?"#95E1D3":s>=4?"#ffe66d":"#f76";}
+function greeting(){const h=new Date().getHours();return h<12?"Good morning":"h<17"?"Good afternoon":"Good evening";}
+
+// ── Claude AI ─────────────────────────────────────────────────────────────────
+async function analyzeFood(dataUrl){
+  const base64=dataUrl.split(",")[1];
+  const mime=dataUrl.split(";")[0].split(":")[1]||"image/jpeg";
+  const prompt=`You are a world-class nutrition expert and food scientist.
+Analyze this food image with extreme precision. Even if blurry, messy, or partially eaten — ALWAYS identify it. Never refuse.
+
+Return ONLY raw JSON starting with { and ending with }. No markdown, no text outside the JSON.
+
+{
+  "name": "Specific Food Name (e.g. Margherita Pizza, not just Pizza)",
+  "emoji": "🍕",
+  "description": "2-3 sentences describing the dish, cuisine type, cooking method, and main components.",
+  "servingSize": "Estimated portion (e.g. 2 slices 280g)",
+  "calories": 530,
+  "protein": 22,
+  "carbs": 64,
+  "fat": 20,
+  "fiber": 3,
+  "sugar": 7,
+  "sodium": 980,
+  "saturatedFat": 9,
+  "cholesterol": 40,
+  "vitamins": ["Vitamin A", "Vitamin C", "Vitamin B12", "Vitamin D"],
+  "minerals": ["Calcium", "Iron", "Potassium", "Zinc", "Magnesium"],
+  "ingredients": ["pizza dough", "tomato sauce", "fresh mozzarella", "fresh basil", "olive oil", "sea salt"],
+  "healthScore": 6,
+  "tags": ["italian", "vegetarian", "comfort-food", "high-carb"],
+  "summary": "5-6 sentences of expert nutritional analysis. Cover: macronutrient profile and balance, key micronutrients and their benefits, health score reasoning, any nutritional concerns (sodium/sugar/sat fat), how it fits in a balanced diet, and one actionable tip to make it healthier."
+}
+
+Be accurate with calories and macros based on visible portion size. healthScore: 1=very unhealthy, 10=superfoods only.`;
+
+  const resp=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"content-type":"application/json","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-opus-4-5",max_tokens:1500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:mime,data:base64}},{type:"text",text:prompt}]}]})
+  });
+  const data=await resp.json();
+  if(!resp.ok)throw new Error(`API ${resp.status}: ${data?.error?.message||JSON.stringify(data)}`);
+  const txt=(data?.content?.[0]?.text||"").trim();
+  if(!txt)throw new Error("Empty response");
+  const parsed=tryJSON(txt);
+  if(!parsed)throw new Error("Parse failed: "+txt.slice(0,300));
+  return fixFood(parsed);
+}
+
+// ── File handler ──────────────────────────────────────────────────────────────
+async function handleFile(file){
+  if(!file||!file.type.startsWith("image/"))return;
+  set({screen:"scanning",error:null,debug:null});
+  const imgUrl=URL.createObjectURL(file);
+  try{
+    const dataUrl=await toB64(file);
+    const result=await analyzeFood(dataUrl);
+    result.id=Date.now();
+    result.time=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    result.imgUrl=imgUrl;
+    set({food:result,screen:"result"});
+  }catch(e){
+    URL.revokeObjectURL(imgUrl);
+    set({error:"Could not recognize food.",debug:e instanceof Error?e.message:String(e),screen:"home"});
+  }
+}
+
+function addToLog(){set({log:[...S.log,S.food],screen:"log"});}
+function removeFromLog(id){set({log:S.log.filter(x=>x.id!==id)});}
+function clearLog(){if(confirm("Clear all meals for today?"))set({log:[],screen:"home"});}
+
+// ── SVG Ring ──────────────────────────────────────────────────────────────────
+function ring(val,max,color,size=70){
+  const p=Math.min(val/max,1),r=(size-12)/2,c=2*Math.PI*r,ov=val>max;
+  return `<svg width="${size}" height="${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="5.5"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${ov?"#f55":color}" stroke-width="5.5"
+      stroke-linecap="round" stroke-dasharray="${p*c} ${c}" style="transition:stroke-dasharray 1s cubic-bezier(0.34,1.56,0.64,1)"/>
+  </svg>`;
+}
+
+function macroCard(label,cur,goal,color,unit="g"){
+  const pct=Math.round(cur/goal*100),ov=cur>goal;
+  return `<div class="macro-card">
+    <div class="macro-top" style="background:${color}"></div>
+    <div class="ring-wrap">${ring(cur,goal,color,70)}<div class="ring-pct" style="color:${ov?"#f55":"#fff"}">${pct}%</div></div>
+    <div style="text-align:center">
+      <div class="macro-val" style="color:${ov?"#f55":"#fff"}">${Math.round(cur)}<span style="font-size:9px;opacity:0.5">${unit}</span></div>
+      <div class="macro-lbl">${label}</div>
+      <div class="macro-goal">of ${goal}${unit}</div>
+    </div>
+  </div>`;
+}
+
+function nutriBar(label,val,goal,unit,color){
+  const p=Math.min(val/goal*100,100),ov=val>goal;
+  return `<div class="n-bar">
+    <div class="n-bar-row">
+      <span style="opacity:0.65;font-weight:500">${label}</span>
+      <span style="color:${ov?"#f55":"#fff"};font-weight:700">${Math.round(val*10)/10}${unit}<span style="opacity:0.3;font-weight:400"> / ${goal}${unit}</span></span>
+    </div>
+    <div class="n-bar-track"><div class="n-bar-fill" style="width:${p}%;background:${ov?"linear-gradient(90deg,#ff6b6b,#f55)":color}"></div></div>
+  </div>`;
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  const {screen,food,log,error,debug,tots}=S;
+  const app=document.getElementById("app");
+
+  const h=new Date().getHours();
+  const greet=h<12?"Good morning ☀️":h<17?"Good afternoon 🌤️":"Good evening 🌙";
+
+  const header=`
+    <div class="header">
+      <div>
+        <div class="logo">NutriScan AI</div>
+        <div class="logo-sub">POWERED BY CLAUDE VISION</div>
+      </div>
+      <div class="header-icons">
+        <button class="icon-btn ${screen!=="log"?"active":""}" onclick="set({screen:'home'})" title="Scan">📷</button>
+        <button class="icon-btn ${screen==="log"?"active":""}" onclick="set({screen:'log'})" title="Daily Log">📋</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab ${screen!=="log"?"active":""}" onclick="set({screen:'home'})">Scan Food</button>
+      <button class="tab ${screen==="log"?"active":""}" onclick="set({screen:'log'})">Daily Log ${log.length>0?`<span style="background:#FF6B35;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px">${log.length}</span>`:"(0)"}</button>
+    </div>`;
+
+  let body="";
+
+  // HOME
+  if(screen==="home"){
+    body=`<div style="padding:20px;flex:1">
+      <div class="banner fadeUp">
+        <div class="banner-icon">🍽️</div>
+        <div>
+          <div class="banner-title">${greet}</div>
+          <div class="banner-sub">Take or upload a photo of your food to get instant, detailed nutrition analysis.</div>
+        </div>
+      </div>
+
+      <div class="upload-grid fadeUp" style="animation-delay:0.05s">
+        <button class="upload-card upload-card-primary" onclick="openCamera()">
+          <div class="upload-icon">📸</div>
+          <div class="upload-label">Take Photo</div>
+          <div class="upload-sub">Use your camera</div>
+        </button>
+        <button class="upload-card upload-card-secondary" onclick="openGallery()">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-label" style="color:#fff">Upload Photo</div>
+          <div class="upload-sub">From gallery</div>
+        </button>
+      </div>
+
+      <div class="dropzone fadeUp" id="dropzone" style="animation-delay:0.1s">
+        📂 Drag &amp; drop a food photo here
+      </div>
+
+      ${error?`<div class="error-box fadeUp">
+        <div class="error-icon">⚠️</div>
+        <div class="error-title">${esc(error)}</div>
+        ${debug?`<div class="error-debug">${esc(debug)}</div>`:""}
+        <div style="font-size:11px;opacity:0.4;margin-top:8px">Try a clearer photo or a different image</div>
+      </div>`:""}
+
+      ${log.length>0?`<div class="card fadeUp" style="animation-delay:0.15s">
+        <div class="sec-lbl">Today at a glance</div>
+        <div class="today-snap">
+          ${[["🔥",Math.round(tots.calories||0),"kcal"],["💪",Math.round(tots.protein||0)+"g","protein"],["🍞",Math.round(tots.carbs||0)+"g","carbs"],["🥑",Math.round(tots.fat||0)+"g","fat"]].map(([i,v,l])=>`
+            <div class="snap-item">
+              <div class="snap-icon">${i}</div>
+              <div class="snap-val">${v}</div>
+              <div class="snap-lbl">${l}</div>
+            </div>`).join("")}
+        </div>
+      </div>`:""}
+
+      ${food&&screen==="home"?`<button class="btn btn-secondary fadeUp" onclick="set({screen:'result'})">← Back to last result</button>`:""}
+    </div>`;
+  }
+
+  // SCANNING
+  if(screen==="scanning"){
+    body=`<div class="scan-wrap fadeIn">
+      <div class="scan-orb spin">🔍</div>
+      <div class="scan-title">Analyzing your food…</div>
+      <div class="scan-sub">Claude Vision is identifying every nutrient,<br>ingredient, and health insight</div>
+      <div class="scan-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>`;
+  }
+
+  // RESULT
+  if(screen==="result"&&food){
+    body=`<div style="padding:20px;flex:1" class="fadeUp">
+      <!-- Hero -->
+      <div class="card card-hero" style="text-align:center;padding:20px">
+        ${food.imgUrl?`<img src="${food.imgUrl}" class="food-img" alt="${esc(food.name)}">`:""}
+        <div style="font-size:50px;margin-bottom:10px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.4))">${food.emoji}</div>
+        <div class="food-name">${esc(food.name)}</div>
+        <div class="food-desc">${esc(food.description)}</div>
+        <div class="food-tags">${food.tags.map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}</div>
+      </div>
+
+      <!-- Score + Calories -->
+      <div class="score-grid">
+        <div class="card" style="padding:18px;text-align:center;margin-bottom:0">
+          <div class="score-lbl">Health Score</div>
+          <div class="score-val" style="color:${hc(food.healthScore)}">${food.healthScore}</div>
+          <div style="display:flex;justify-content:center;gap:3px;margin-top:8px">
+            ${Array.from({length:10},(_,i)=>`<div style="width:14px;height:4px;border-radius:2px;background:${i<food.healthScore?hc(food.healthScore):"rgba(255,255,255,0.1)"}"></div>`).join("")}
+          </div>
+          <div class="score-sub">/10</div>
+        </div>
+        <div class="card" style="padding:18px;text-align:center;margin-bottom:0">
+          <div class="score-lbl">Calories</div>
+          <div class="score-val" style="color:#FF6B35">${food.calories}</div>
+          <div style="font-size:10px;opacity:0.3;margin-top:4px">${esc(food.servingSize)}</div>
+          <div style="font-size:10px;opacity:0.3;margin-top:2px">${Math.round(food.calories/GOALS.calories*100)}% of daily goal</div>
+        </div>
+      </div>
+
+      <!-- Macros -->
+      <div class="card">
+        <div class="sec-lbl">Macronutrients</div>
+        <div class="macro-grid-3">
+          ${macroCard("Protein",food.protein,GOALS.protein,C.protein)}
+          ${macroCard("Carbs",food.carbs,GOALS.carbs,C.carbs)}
+          ${macroCard("Fat",food.fat,GOALS.fat,C.fat)}
+        </div>
+      </div>
+
+      <!-- Nutrition panel -->
+      <div class="card">
+        <div class="sec-lbl">Full Nutrition Panel</div>
+        ${nutriBar("Dietary Fiber",food.fiber,GOALS.fiber,"g",C.fiber)}
+        ${nutriBar("Sugar",food.sugar,GOALS.sugar,"g",C.sugar)}
+        ${nutriBar("Saturated Fat",food.saturatedFat,GOALS.saturatedFat,"g",C.saturatedFat)}
+        ${nutriBar("Sodium",food.sodium,GOALS.sodium,"mg",C.sodium)}
+        ${nutriBar("Cholesterol",food.cholesterol,GOALS.cholesterol,"mg",C.cholesterol)}
+      </div>
+
+      <!-- Ingredients + Vitamins -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div class="card" style="margin-bottom:0">
+          <div class="sec-lbl">Ingredients</div>
+          ${food.ingredients.length?food.ingredients.map(i=>`<div style="font-size:12px;opacity:0.65;margin-bottom:5px;display:flex;gap:6px;align-items:start"><span style="opacity:0.4;flex-shrink:0">•</span>${esc(i)}</div>`).join(""):`<div style="opacity:0.3;font-size:12px">Not identified</div>`}
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="sec-lbl">Vitamins & Minerals</div>
+          ${[...food.vitamins,...food.minerals].length?[...food.vitamins,...food.minerals].map(v=>`<div style="font-size:12px;opacity:0.65;margin-bottom:5px;display:flex;gap:6px;align-items:start"><span style="color:#4ecdc4;flex-shrink:0">✓</span>${esc(v)}</div>`).join(""):`<div style="opacity:0.3;font-size:12px">None identified</div>`}
+        </div>
+      </div>
+
+      <!-- AI Summary -->
+      <div class="card card-teal">
+        <div class="sec-lbl">🤖 AI Nutrition Analysis</div>
+        <div style="font-size:13px;line-height:1.85;opacity:0.82;font-weight:400">${esc(food.summary)}</div>
+      </div>
+
+      <!-- Actions -->
+      <button class="btn btn-primary" onclick="addToLog()">＋ Add to Today's Log</button>
+      <button class="btn btn-secondary" onclick="set({screen:'home'})">📷 Scan Another Food</button>
+    </div>`;
+  }
+
+  // LOG
+  if(screen==="log"){
+    const calPct=Math.min(((tots.calories||0)/GOALS.calories)*100,100);
+    const calOver=(tots.calories||0)>GOALS.calories;
+
+    const logItems=log.length===0
+      ?`<div class="empty"><div class="empty-icon">🍽️</div><div class="empty-text">No meals logged yet.<br>Scan your first food to start tracking!</div></div>`
+      :log.slice().reverse().map(x=>`
+        <div class="log-item">
+          <button class="remove-btn" onclick="removeFromLog(${x.id})">×</button>
+          ${x.imgUrl?`<img src="${x.imgUrl}" class="log-thumb" alt="${esc(x.name)}">`:`<div class="log-thumb-placeholder">${x.emoji}</div>`}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+              <div class="log-name">${x.emoji} ${esc(x.name)}</div>
+              <div class="log-time">${x.time}</div>
+            </div>
+            <div class="log-cal">${x.calories}<span style="font-size:11px;opacity:0.4;font-weight:400"> kcal</span></div>
+            <div class="log-macros">P: ${Math.round(x.protein)}g &nbsp;·&nbsp; C: ${Math.round(x.carbs)}g &nbsp;·&nbsp; F: ${Math.round(x.fat)}g</div>
+          </div>
+          <div class="health-badge" style="background:conic-gradient(${hc(x.healthScore)} ${x.healthScore*36}deg,rgba(255,255,255,0.07) 0);color:#fff">${x.healthScore}</div>
+        </div>`).join("");
+
+    body=`<div style="padding:20px;flex:1" class="fadeUp">
+
+      <!-- Calorie progress -->
+      <div class="card">
+        <div class="sec-lbl">Daily Progress</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <div style="font-size:38px;font-weight:900;color:${calOver?"#f55":C.calories};line-height:1">${Math.round(tots.calories||0)}</div>
+          <div style="text-align:right">
+            <div style="font-size:13px;opacity:0.4">of ${GOALS.calories} kcal</div>
+            <div style="font-size:12px;color:${calOver?"#f55":"#4ecdc4"};font-weight:600">${calOver?`+${Math.round((tots.calories||0)-GOALS.calories)} over`:`${Math.round(GOALS.calories-(tots.calories||0))} left`}</div>
+          </div>
+        </div>
+        <div class="cal-track"><div class="cal-fill" style="width:${calPct}%;background:${calOver?"linear-gradient(90deg,#ff6b6b,#f55)":"linear-gradient(90deg,#FF6B35,#FFE66D)"}"></div></div>
+      </div>
+
+      <!-- Macro rings -->
+      <div class="card">
+        <div class="sec-lbl">Macronutrient Goals</div>
+        <div class="macro-grid-4">
+          ${macroCard("Protein",tots.protein||0,GOALS.protein,C.protein)}
+          ${macroCard("Carbs",tots.carbs||0,GOALS.carbs,C.carbs)}
+          ${macroCard("Fat",tots.fat||0,GOALS.fat,C.fat)}
+          ${macroCard("Fiber",tots.fiber||0,GOALS.fiber,C.fiber)}
+        </div>
+      </div>
+
+      <!-- Micronutrients -->
+      <div class="card">
+        <div class="sec-lbl">Micronutrient Goals</div>
+        ${nutriBar("Sugar",tots.sugar||0,GOALS.sugar,"g",C.sugar)}
+        ${nutriBar("Saturated Fat",tots.saturatedFat||0,GOALS.saturatedFat,"g",C.saturatedFat)}
+        ${nutriBar("Sodium",tots.sodium||0,GOALS.sodium,"mg",C.sodium)}
+        ${nutriBar("Cholesterol",tots.cholesterol||0,GOALS.cholesterol,"mg",C.cholesterol)}
+      </div>
+
+      <!-- Meal list -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="sec-lbl" style="margin-bottom:0">Meals Today (${log.length})</div>
+        ${log.length>0?`<button onclick="clearLog()" style="background:none;border:none;color:rgba(255,100,100,0.5);font-size:12px;font-weight:600;cursor:pointer">Clear all</button>`:""}
+      </div>
+      ${logItems}
+
+      <div style="height:14px"></div>
+      <button class="btn btn-primary" onclick="set({screen:'home'})">📷 Scan More Food</button>
+    </div>`;
+  }
+
+  app.innerHTML=header+body;
+
+  // Bind dropzone
+  if(screen==="home"){
+    const dz=document.getElementById("dropzone");
+    if(dz){
+      dz.onclick=()=>openGallery();
+      dz.ondragover=e=>{e.preventDefault();dz.classList.add("drag");};
+      dz.ondragleave=()=>dz.classList.remove("drag");
+      dz.ondrop=e=>{e.preventDefault();dz.classList.remove("drag");if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);};
+    }
+  }
+}
+
+render();
+</script>
+</body>
+</html>
